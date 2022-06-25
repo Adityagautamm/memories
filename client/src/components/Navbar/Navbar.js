@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { Box, AppBar, Toolbar, IconButton, Menu, Container, Avatar, Tooltip, MenuItem, TextField, Typography, Paper, CardMedia, TextareaAutosize, Button } from '@material-ui/core';
 import MenuRounded from '@material-ui/icons/MenuRounded';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import useStyles from './styles';
+import { Link, useHistory, useLocation } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import decode from 'jwt-decode';
+
+
 
 const pages = ['Products', 'Pricing', 'Blog'];
 const option1 = ['one', 'two', 'three']
@@ -17,6 +22,10 @@ const Navbar = () => {
     const [anchorElNav, setAnchorElNav] = useState(null);
     const [anchorElUser, setAnchorElUser] = useState(null);
     const [anchorUser, setAnchorUser] = useState(null);
+    const [user, setUser] = useState(JSON.parse(localStorage.getItem('profile')));
+    const dispatch = useDispatch();
+    const history = useHistory();
+    const location = useLocation();
 
     const handleOpenNavMenu = (event) => {
         setAnchorElNav(event.currentTarget);
@@ -47,6 +56,26 @@ const Navbar = () => {
     const handleCloseUserMenu = () => {
         setAnchorUser(null);
     };
+
+    const logout = () => {
+        dispatch({ type: 'LOGOUT' });
+
+        history.push('/');
+
+        setUser(null);
+    };
+
+    useEffect(() => {
+        const token = user?.token;
+
+        if (token) {
+            const decodedToken = decode(token);
+
+            if (decodedToken.exp * 1000 < new Date().getTime()) logout();
+        }
+
+        setUser(JSON.parse(localStorage.getItem('profile')));
+    }, [location]);
 
 
     return (
@@ -108,7 +137,7 @@ const Navbar = () => {
                         </box>
                     </box>
                     <box className={classes.left} >
-                        <button onClick={handleOpenUserMenu}><AccountCircle /></button>
+                        <button onClick={handleOpenUserMenu}>{user?.result?.name}<AccountCircle /></button>
                         <Menu
                             id="menu-appbar"
                             anchorEl={anchorElUser}
@@ -125,11 +154,11 @@ const Navbar = () => {
                             onClose={handleCloseUserMenu}
 
                         >
-                            {settings.map((page) => (
-                                <MenuItem key={page} onClick={handleCloseUserMenu}>
-                                    <Typography textAlign="center">{page}</Typography>
-                                </MenuItem>
-                            ))}
+
+                            <MenuItem onClick={handleCloseUserMenu}>
+                                <button textAlign="center" onClick={logout}>Logout</button>
+                            </MenuItem>
+
                         </Menu>
                     </box>
 
